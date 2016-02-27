@@ -1,7 +1,5 @@
 <?php
 require('redis.php');
-
-
 //总记录数
 $count = $redis->lSize('userid');
 
@@ -21,10 +19,27 @@ foreach ($ids as $id)
 }
 
 
-
 ?>
 
-<a href="add.php" >添加</a>
+<a href="add.php" >注册</a>
+<?php
+    if (!empty($_COOKIE['auth'])) {
+
+
+    $auth = $_COOKIE['auth'];
+        $id = $redis->get('auth:'.$auth);
+        $name = $redis->hget('user'.$id, 'username');
+?>
+        欢迎您 <?php echo $name;?>
+        <a href="logout.php">退出</a>
+
+
+
+ <?php
+    } else {
+?>
+<a href="login.php">登陆</a>
+<?php } ?>
 <table border="1">
     <tr>
         <th>uid</th>
@@ -37,7 +52,13 @@ foreach ($ids as $id)
     <td><?php echo $v['uid'];?></td>
     <td><?php echo $v['username'];?></td>
     <td><?php echo $v['age'];?></td>
-    <td><a href="edit.php?uid=<?php echo $v['uid'];?>" >编辑</a><a href="del.php?uid=<?php echo $v['uid'];?>">删除</a></td>
+    <td>
+        <a href="edit.php?uid=<?php echo $v['uid'];?>" >编辑</a>
+        <a href="del.php?uid=<?php echo $v['uid'];?>">删除</a>
+        <?php if (!empty($_COOKIE['auth']) && $v['uid'] != $id) { ?>
+        <a href="addfans.php?uid=<?php echo $v['uid'];?>&id=<?php echo $id;?>">加关注</a>
+        <?php }?>
+    </td>
 </tr>
 
     <?php } ?>
@@ -49,4 +70,19 @@ foreach ($ids as $id)
         }
 
     ?>
+</table>
+
+<p>我关注的人</p>
+<table border="1">
+    <?php
+        $datas = $redis->sMembers('user:'.$id.':following:');
+        foreach ($datas as $data) {
+            $user = $redis->hGetAll('user'.$data);
+    ?>
+    <tr>
+        <td><?php echo $user['username'];?></td>
+    </tr>
+
+<?php }?>
+
 </table>
